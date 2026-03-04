@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ankang.contract.mapper.ContractFeeMapper">
+
+    <resultMap id="BaseResultMap" type="com.ankang.contract.entity.ContractFee">
+        <id column="id" property="id"/>
+        <result column="institution_no" property="institutionNo"/>
+        <result column="fee_amount" property="feeAmount"/>
+        <result column="fee_date" property="feeDate"/>
+        <result column="payment_method" property="paymentMethod"/>
+        <result column="recorded_by" property="recordedBy"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM contract_fee WHERE id = #{id}
+    </select>
+
+    <select id="findByInstitutionNo" resultMap="BaseResultMap">
+        SELECT * FROM contract_fee WHERE institution_no = #{institutionNo} ORDER BY fee_date DESC
+    </select>
+
+    <insert id="insert" parameterType="com.ankang.contract.entity.ContractFee" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO contract_fee (institution_no, fee_amount, fee_date, payment_method, recorded_by, remark)
+        VALUES (#{institutionNo}, #{feeAmount}, #{feeDate}, #{paymentMethod}, #{recordedBy}, #{remark})
+    </insert>
+
+    <update id="update" parameterType="com.ankang.contract.entity.ContractFee">
+        UPDATE contract_fee
+        <set>
+            <if test="institutionNo != null">institution_no = #{institutionNo},</if>
+            <if test="feeAmount != null">fee_amount = #{feeAmount},</if>
+            <if test="feeDate != null">fee_date = #{feeDate},</if>
+            <if test="paymentMethod != null">payment_method = #{paymentMethod},</if>
+            <if test="recordedBy != null">recorded_by = #{recordedBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM contract_fee WHERE id = #{id}
+    </delete>
+
+</mapper>

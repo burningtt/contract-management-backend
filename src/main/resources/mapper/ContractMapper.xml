@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ankang.contract.mapper.ContractMapper">
+
+    <resultMap id="BaseResultMap" type="com.ankang.contract.entity.Contract">
+        <id column="id" property="id"/>
+        <result column="contract_no" property="contractNo"/>
+        <result column="institution_no" property="institutionNo"/>
+        <result column="contract_amount" property="contractAmount"/>
+        <result column="sign_date" property="signDate"/>
+        <result column="expire_date" property="expireDate"/>
+        <result column="responsible_person" property="responsiblePerson"/>
+        <result column="contract_status" property="contractStatus"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM contract WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="BaseResultMap">
+        SELECT * FROM contract ORDER BY create_time DESC
+    </select>
+
+    <select id="findContractsWithPriority" resultMap="BaseResultMap">
+        SELECT c.* FROM contract c
+        WHERE c.id = (
+            SELECT c2.id FROM contract c2
+            WHERE c2.institution_no = c.institution_no
+            ORDER BY 
+                CASE c2.contract_status 
+                    WHEN 'ACTIVE' THEN 1 
+                    WHEN 'PENDING' THEN 2 
+                    ELSE 3 
+                END,
+                CASE c2.contract_status 
+                    WHEN 'PENDING' THEN ABS(DATEDIFF(c2.sign_date, CURDATE()))
+                    WHEN 'INACTIVE' THEN ABS(DATEDIFF(c2.expire_date, CURDATE()))
+                    ELSE 0
+                END
+            LIMIT 1
+        )
+        ORDER BY c.institution_no
+    </select>
+
+    <select id="findInstitutionContractsWithPriority" resultType="com.ankang.contract.dto.ContractQueryDTO">
+        SELECT 
+            i.id as institutionId,
+            i.institution_no as institutionNo,
+            i.institution_name as institutionName,
+            i.region as region,
+            c.id as contractId,
+            c.contract_no as contractNo,
+            c.contract_amount as contractAmount,
+            c.sign_date as signDate,
+            c.expire_date as expireDate,
+            c.responsible_person as responsiblePerson,
+            c.contract_status as contractStatus,
+            c.remark as remark
+        FROM institution i
+        LEFT JOIN (
+            SELECT c2.*, 
+                   ROW_NUMBER() OVER(PARTITION BY c2.institution_no ORDER BY 
+                       CASE c2.contract_status 
+                           WHEN 'ACTIVE' THEN 1 
+                           WHEN 'PENDING' THEN 2 
+                           ELSE 3 
+                       END,
+                       CASE c2.contract_status 
+                           WHEN 'PENDING' THEN ABS(DATEDIFF(c2.sign_date, CURDATE()))
+                           WHEN 'INACTIVE' THEN ABS(DATEDIFF(c2.expire_date, CURDATE()))
+                           ELSE 0
+                       END
+                   ) as rn
+            FROM contract c2
+        ) c ON i.institution_no = c.institution_no AND c.rn = 1
+        WHERE i.institution_status = 'NORMAL'
+        ORDER BY i.institution_no
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="searchInstitutionContracts" resultType="com.ankang.contract.dto.ContractQueryDTO">
+        SELECT 
+            i.id as institutionId,
+            i.institution_no as institutionNo,
+            i.institution_name as institutionName,
+            i.region as region,
+            c.id as contractId,
+            c.contract_no as contractNo,
+            c.contract_amount as contractAmount,
+            c.sign_date as signDate,
+            c.expire_date as expireDate,
+            c.responsible_person as responsiblePerson,
+            c.contract_status as contractStatus,
+            c.remark as remark
+        FROM institution i
+        LEFT JOIN (
+            SELECT c2.*, 
+                   ROW_NUMBER() OVER(PARTITION BY c2.institution_no ORDER BY 
+                       CASE c2.contract_status 
+                           WHEN 'ACTIVE' THEN 1 
+                           WHEN 'PENDING' THEN 2 
+                           ELSE 3 
+                       END,
+                       CASE c2.contract_status 
+                           WHEN 'PENDING' THEN ABS(DATEDIFF(c2.sign_date, CURDATE()))
+                           WHEN 'INACTIVE' THEN ABS(DATEDIFF(c2.expire_date, CURDATE()))
+                           ELSE 0
+                       END
+                   ) as rn
+            FROM contract c2
+            <if test="year != null">
+                WHERE YEAR(c2.sign_date) = #{year}
+            </if>
+        ) c ON i.institution_no = c.institution_no AND c.rn = 1
+        WHERE i.institution_status = 'NORMAL'
+        <if test="institutionNo != null and institutionNo != ''">
+            AND i.institution_no = #{institutionNo}
+        </if>
+        <if test="region != null and region != ''">
+            AND i.region = #{region}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (
+                i.institution_no LIKE CONCAT('%', #{keyword}, '%')
+                OR i.institution_name LIKE CONCAT('%', #{keyword}, '%')
+                OR c.contract_no LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+        ORDER BY i.institution_no
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countInstitutionContractsWithPriority" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM institution WHERE institution_status = 'NORMAL'
+    </select>
+
+    <select id="countSearchInstitutionContracts" resultType="java.lang.Long">
+        SELECT COUNT(DISTINCT i.id) FROM institution i
+        WHERE i.institution_status = 'NORMAL'
+        <if test="year != null">
+            AND EXISTS (
+                SELECT 1 FROM contract c 
+                WHERE c.institution_no = i.institution_no 
+                AND YEAR(c.sign_date) = #{year}
+            )
+        </if>
+        <if test="institutionNo != null and institutionNo != ''">
+            AND i.institution_no = #{institutionNo}
+        </if>
+        <if test="region != null and region != ''">
+            AND i.region = #{region}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (
+                i.institution_no LIKE CONCAT('%', #{keyword}, '%')
+                OR i.institution_name LIKE CONCAT('%', #{keyword}, '%')
+                OR EXISTS (
+                    SELECT 1 FROM contract c 
+                    WHERE c.institution_no = i.institution_no 
+                    AND c.contract_no LIKE CONCAT('%', #{keyword}, '%')
+                )
+            )
+        </if>
+    </select>
+
+    <select id="findByInstitutionNo" resultMap="BaseResultMap">
+        SELECT * FROM contract WHERE institution_no = #{institutionNo} ORDER BY create_time DESC
+    </select>
+
+    <insert id="insert" parameterType="com.ankang.contract.entity.Contract" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO contract (contract_no, institution_no, contract_amount, sign_date, expire_date, responsible_person, contract_status, remark)
+        VALUES (#{contractNo}, #{institutionNo}, #{contractAmount}, #{signDate}, #{expireDate}, #{responsiblePerson}, #{contractStatus}, #{remark})
+    </insert>
+
+    <update id="update" parameterType="com.ankang.contract.entity.Contract">
+        UPDATE contract
+        <set>
+            <if test="contractNo != null">contract_no = #{contractNo},</if>
+            <if test="institutionNo != null">institution_no = #{institutionNo},</if>
+            <if test="contractAmount != null">contract_amount = #{contractAmount},</if>
+            <if test="signDate != null">sign_date = #{signDate},</if>
+            <if test="expireDate != null">expire_date = #{expireDate},</if>
+            <if test="responsiblePerson != null">responsible_person = #{responsiblePerson},</if>
+            <if test="contractStatus != null">contract_status = #{contractStatus},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE contract SET contract_status = #{contractStatus} WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM contract WHERE id = #{id}
+    </delete>
+
+    <select id="findMaxContractNoByYearAndRegion" resultType="java.lang.String">
+        SELECT MAX(contract_no) FROM contract 
+        WHERE contract_no LIKE CONCAT(#{year}, #{region, jdbcType=VARCHAR}, '%')
+    </select>
+
+    <select id="findByInstitutionNoForDateCheck" resultMap="BaseResultMap">
+        SELECT * FROM contract 
+        WHERE institution_no = #{institutionNo}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+</mapper>

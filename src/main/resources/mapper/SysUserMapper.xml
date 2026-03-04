@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ankang.contract.mapper.SysUserMapper">
+
+    <resultMap id="BaseResultMap" type="com.ankang.contract.entity.SysUser">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="password" property="password"/>
+        <result column="real_name" property="realName"/>
+        <result column="phone" property="phone"/>
+        <result column="email" property="email"/>
+        <result column="role" property="role"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="findByUsername" resultMap="BaseResultMap">
+        SELECT * FROM sys_user WHERE username = #{username}
+    </select>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM sys_user WHERE id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="com.ankang.contract.entity.SysUser" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_user (username, password, real_name, phone, email, role, status)
+        VALUES (#{username}, #{password}, #{realName}, #{phone}, #{email}, #{role}, #{status})
+    </insert>
+
+    <update id="update" parameterType="com.ankang.contract.entity.SysUser">
+        UPDATE sys_user
+        <set>
+            <if test="password != null">password = #{password},</if>
+            <if test="realName != null">real_name = #{realName},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="role != null">role = #{role},</if>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+</mapper>
