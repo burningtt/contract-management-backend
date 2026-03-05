@@ -23,6 +23,10 @@ public class ContractFeeService {
         return contractFeeMapper.findByInstitutionNo(institutionNo);
     }
 
+    public List<ContractFee> findAll() {
+        return contractFeeMapper.findAll();
+    }
+
     public int create(ContractFee contractFee) {
         return contractFeeMapper.insert(contractFee);
     }

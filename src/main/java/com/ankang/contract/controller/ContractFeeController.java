@@ -17,6 +17,16 @@ public class ContractFeeController {
         this.contractFeeService = contractFeeService;
     }
 
+    @GetMapping("/all")
+    public ApiResponse<List<ContractFee>> getAll() {
+        return ApiResponse.success(contractFeeService.findAll());
+    }
+
+    @GetMapping("/institution/{institutionNo}")
+    public ApiResponse<List<ContractFee>> getByInstitutionNo(@PathVariable String institutionNo) {
+        return ApiResponse.success(contractFeeService.findByInstitutionNo(institutionNo));
+    }
+
     @GetMapping("/{id}")
     public ApiResponse<ContractFee> getById(@PathVariable Long id) {
         ContractFee contractFee = contractFeeService.findById(id);
@@ -24,11 +34,6 @@ public class ContractFeeController {
             return ApiResponse.error("费用记录不存在");
         }
         return ApiResponse.success(contractFee);
-    }
-
-    @GetMapping("/institution/{institutionNo}")
-    public ApiResponse<List<ContractFee>> getByInstitutionNo(@PathVariable String institutionNo) {
-        return ApiResponse.success(contractFeeService.findByInstitutionNo(institutionNo));
     }
 
     @PostMapping
