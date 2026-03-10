@@ -22,10 +22,6 @@
         SELECT * FROM contract_fee WHERE institution_no = #{institutionNo} ORDER BY fee_date DESC
     </select>
 
-    <select id="findAll" resultMap="BaseResultMap">
-        SELECT * FROM contract_fee ORDER BY fee_date DESC
-    </select>
-
     <insert id="insert" parameterType="com.ankang.contract.entity.ContractFee" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO contract_fee (institution_no, fee_amount, fee_date, payment_method, recorded_by, remark)
         VALUES (#{institutionNo}, #{feeAmount}, #{feeDate}, #{paymentMethod}, #{recordedBy}, #{remark})

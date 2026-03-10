@@ -17,6 +17,7 @@ D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\s
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\filter\JwtAuthenticationFilter.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\config\DatabaseInitializer.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\util\SecurityUtils.java
+D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\controller\SysUserController.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\controller\AuthController.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\exception\BusinessException.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\mapper\ContractMapper.java
@@ -24,6 +25,7 @@ D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\d
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\dto\LoginResponse.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\mapper\ContractFeeMapper.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\util\PasswordGenerator.java
+D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\dto\ChangePasswordRequest.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\task\ContractStatusScheduler.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\config\SecurityConfig.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\entity\BaseEntity.java

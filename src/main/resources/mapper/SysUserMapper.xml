@@ -23,6 +23,10 @@
         SELECT * FROM sys_user WHERE id = #{id}
     </select>
 
+    <select id="findAll" resultMap="BaseResultMap">
+        SELECT * FROM sys_user ORDER BY create_time DESC
+    </select>
+
     <insert id="insert" parameterType="com.ankang.contract.entity.SysUser" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO sys_user (username, password, real_name, phone, email, role, status)
         VALUES (#{username}, #{password}, #{realName}, #{phone}, #{email}, #{role}, #{status})
@@ -40,5 +44,9 @@
         </set>
         WHERE id = #{id}
     </update>
+
+    <delete id="deleteById">
+        DELETE FROM sys_user WHERE id = #{id}
+    </delete>
 
 </mapper>
