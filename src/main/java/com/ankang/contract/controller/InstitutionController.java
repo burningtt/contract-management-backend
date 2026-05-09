@@ -37,8 +37,9 @@ public class InstitutionController {
         @RequestParam(required = false, defaultValue = "10") int size,
         @RequestParam(required = false) String region,
         @RequestParam(required = false) Integer year,
-        @RequestParam(required = false) String institutionName) {
-        PageResponse<FeeStatisticsDTO> pageResponse = institutionService.findFeeStatistics(region, year, institutionName, page, size);
+        @RequestParam(required = false) String institutionName,
+        @RequestParam(required = false) String paymentStatus) {
+        PageResponse<FeeStatisticsDTO> pageResponse = institutionService.findFeeStatistics(region, year, institutionName, paymentStatus, page, size);
         return ApiResponse.success(pageResponse);
     }
 

@@ -57,10 +57,10 @@ public class InstitutionService {
         return institutionMapper.findByStatus(institutionStatus);
     }
 
-    public PageResponse<FeeStatisticsDTO> findFeeStatistics(String region, Integer year, String institutionName, int page, int size) {
+    public PageResponse<FeeStatisticsDTO> findFeeStatistics(String region, Integer year, String institutionName, String paymentStatus, int page, int size) {
         int offset = (page - 1) * size;
-        List<FeeStatisticsDTO> rows = institutionMapper.findFeeStatistics(region, year, institutionName, offset, size);
-        Long total = institutionMapper.countFeeStatistics(region, year, institutionName);
+        List<FeeStatisticsDTO> rows = institutionMapper.findFeeStatistics(region, year, institutionName, paymentStatus, offset, size);
+        Long total = institutionMapper.countFeeStatistics(region, year, institutionName, paymentStatus);
         return new PageResponse<>(rows, total);
     }
 

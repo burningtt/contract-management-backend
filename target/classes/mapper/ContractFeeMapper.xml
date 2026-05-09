@@ -44,4 +44,30 @@
         DELETE FROM contract_fee WHERE id = #{id}
     </delete>
 
+    <select id="count" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM contract_fee
+    </select>
+
+    <select id="sumTotalAmount" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(fee_amount), 0) FROM contract_fee
+    </select>
+
+    <select id="countByYear" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM contract_fee WHERE YEAR(fee_date) = #{year}
+    </select>
+
+    <select id="sumAmountByYear" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(fee_amount), 0) FROM contract_fee WHERE YEAR(fee_date) = #{year}
+    </select>
+
+    <select id="sumAmountByCreateTimeYear" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(fee_amount), 0) FROM contract_fee WHERE YEAR(create_time) = #{year}
+    </select>
+
+    <select id="sumAmountByCreateTimeYearAndRegion" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(cf.fee_amount), 0) FROM contract_fee cf
+        INNER JOIN institution i ON cf.institution_no = i.institution_no
+        WHERE YEAR(cf.create_time) = #{year} AND i.region = #{region}
+    </select>
+
 </mapper>

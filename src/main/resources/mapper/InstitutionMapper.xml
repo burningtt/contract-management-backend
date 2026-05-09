@@ -201,20 +201,104 @@
             AND i.institution_name LIKE CONCAT('%', #{institutionName}, '%')
         </if>
         GROUP BY i.institution_no, i.institution_name, i.region
+        <if test="paymentStatus != null and paymentStatus == 'PAID'">
+            HAVING COALESCE(SUM(
+                CASE 
+                    WHEN c.id IS NOT NULL 
+                    AND (
+                        (#{year} IS NULL) 
+                        OR (YEAR(c.sign_date) &lt;= #{year} AND YEAR(c.expire_date) &gt;= #{year})
+                        OR (YEAR(c.sign_date) = #{year})
+                        OR (YEAR(c.expire_date) = #{year})
+                    )
+                    THEN c.contract_amount 
+                    ELSE 0 
+                END
+            ), 0) - COALESCE((
+                SELECT SUM(cf.fee_amount) 
+                FROM contract_fee cf 
+                WHERE cf.institution_no = i.institution_no 
+                AND (#{year} IS NULL OR YEAR(cf.fee_date) = #{year})
+            ), 0) &lt;= 0
+        </if>
+        <if test="paymentStatus != null and paymentStatus == 'UNPAID'">
+            HAVING COALESCE(SUM(
+                CASE 
+                    WHEN c.id IS NOT NULL 
+                    AND (
+                        (#{year} IS NULL) 
+                        OR (YEAR(c.sign_date) &lt;= #{year} AND YEAR(c.expire_date) &gt;= #{year})
+                        OR (YEAR(c.sign_date) = #{year})
+                        OR (YEAR(c.expire_date) = #{year})
+                    )
+                    THEN c.contract_amount 
+                    ELSE 0 
+                END
+            ), 0) - COALESCE((
+                SELECT SUM(cf.fee_amount) 
+                FROM contract_fee cf 
+                WHERE cf.institution_no = i.institution_no 
+                AND (#{year} IS NULL OR YEAR(cf.fee_date) = #{year})
+            ), 0) &gt; 0
+        </if>
         ORDER BY i.institution_no
         LIMIT #{offset}, #{size}
     </select>
 
     <select id="countFeeStatistics" resultType="java.lang.Long">
-        SELECT COUNT(DISTINCT i.institution_no)
-        FROM institution i
-        WHERE i.institution_status = 'NORMAL'
-        <if test="region != null and region != ''">
-            AND i.region = #{region}
-        </if>
-        <if test="institutionName != null and institutionName != ''">
-            AND i.institution_name LIKE CONCAT('%', #{institutionName}, '%')
-        </if>
+        SELECT COUNT(*) FROM (
+            SELECT i.institution_no
+            FROM institution i
+            LEFT JOIN contract c ON i.institution_no = c.institution_no
+            WHERE i.institution_status = 'NORMAL'
+            <if test="region != null and region != ''">
+                AND i.region = #{region}
+            </if>
+            <if test="institutionName != null and institutionName != ''">
+                AND i.institution_name LIKE CONCAT('%', #{institutionName}, '%')
+            </if>
+            GROUP BY i.institution_no, i.institution_name, i.region
+            <if test="paymentStatus != null and paymentStatus == 'PAID'">
+                HAVING COALESCE(SUM(
+                    CASE 
+                        WHEN c.id IS NOT NULL 
+                        AND (
+                            (#{year} IS NULL) 
+                            OR (YEAR(c.sign_date) &lt;= #{year} AND YEAR(c.expire_date) &gt;= #{year})
+                            OR (YEAR(c.sign_date) = #{year})
+                            OR (YEAR(c.expire_date) = #{year})
+                        )
+                        THEN c.contract_amount 
+                        ELSE 0 
+                    END
+                ), 0) - COALESCE((
+                    SELECT SUM(cf.fee_amount) 
+                    FROM contract_fee cf 
+                    WHERE cf.institution_no = i.institution_no 
+                    AND (#{year} IS NULL OR YEAR(cf.fee_date) = #{year})
+                ), 0) &lt;= 0
+            </if>
+            <if test="paymentStatus != null and paymentStatus == 'UNPAID'">
+                HAVING COALESCE(SUM(
+                    CASE 
+                        WHEN c.id IS NOT NULL 
+                        AND (
+                            (#{year} IS NULL) 
+                            OR (YEAR(c.sign_date) &lt;= #{year} AND YEAR(c.expire_date) &gt;= #{year})
+                            OR (YEAR(c.sign_date) = #{year})
+                            OR (YEAR(c.expire_date) = #{year})
+                        )
+                        THEN c.contract_amount 
+                        ELSE 0 
+                    END
+                ), 0) - COALESCE((
+                    SELECT SUM(cf.fee_amount) 
+                    FROM contract_fee cf 
+                    WHERE cf.institution_no = i.institution_no 
+                    AND (#{year} IS NULL OR YEAR(cf.fee_date) = #{year})
+                ), 0) &gt; 0
+            </if>
+        ) AS filtered
     </select>
 
 </mapper>

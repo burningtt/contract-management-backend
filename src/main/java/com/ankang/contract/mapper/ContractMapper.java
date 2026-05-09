@@ -5,6 +5,8 @@ import com.ankang.contract.entity.Contract;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
+
 @Mapper
 public interface ContractMapper {
     Contract findById(Long id);
@@ -21,4 +23,8 @@ public interface ContractMapper {
     int update(Contract contract);
     int updateStatus(@Param("id") Long id, @Param("contractStatus") String contractStatus);
     int deleteById(Long id);
+    Long countByYear(@Param("year") Integer year);
+    BigDecimal sumAmountByYear(@Param("year") Integer year);
+    Long countByYearAndRegion(@Param("year") Integer year, @Param("region") String region);
+    BigDecimal sumAmountByYearAndRegion(@Param("year") Integer year, @Param("region") String region);
 }

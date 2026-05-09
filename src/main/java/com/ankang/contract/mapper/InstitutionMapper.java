@@ -19,6 +19,6 @@ public interface InstitutionMapper {
     int insert(Institution institution);
     int update(Institution institution);
     int deleteById(Long id);
-    java.util.List<FeeStatisticsDTO> findFeeStatistics(@Param("region") String region, @Param("year") Integer year, @Param("institutionName") String institutionName, @Param("offset") int offset, @Param("size") int size);
-    Long countFeeStatistics(@Param("region") String region, @Param("year") Integer year, @Param("institutionName") String institutionName);
+    java.util.List<FeeStatisticsDTO> findFeeStatistics(@Param("region") String region, @Param("year") Integer year, @Param("institutionName") String institutionName, @Param("paymentStatus") String paymentStatus, @Param("offset") int offset, @Param("size") int size);
+    Long countFeeStatistics(@Param("region") String region, @Param("year") Integer year, @Param("institutionName") String institutionName, @Param("paymentStatus") String paymentStatus);
 }

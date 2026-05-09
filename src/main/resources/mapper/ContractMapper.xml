@@ -198,6 +198,20 @@
         DELETE FROM contract WHERE id = #{id}
     </delete>
 
+    <select id="countByYear" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM contract 
+        WHERE YEAR(sign_date) = #{year} 
+           OR YEAR(expire_date) = #{year}
+           OR (sign_date &lt; CONCAT(#{year}, '-01-01') AND expire_date &gt; CONCAT(#{year}, '-12-31'))
+    </select>
+
+    <select id="sumAmountByYear" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(contract_amount), 0) FROM contract 
+        WHERE YEAR(sign_date) = #{year} 
+           OR YEAR(expire_date) = #{year}
+           OR (sign_date &lt; CONCAT(#{year}, '-01-01') AND expire_date &gt; CONCAT(#{year}, '-12-31'))
+    </select>
+
     <select id="findMaxContractNoByYearAndRegion" resultType="java.lang.String">
         SELECT MAX(contract_no) FROM contract 
         WHERE contract_no LIKE CONCAT(#{year}, #{region, jdbcType=VARCHAR}, '%')
@@ -209,6 +223,28 @@
         <if test="excludeId != null">
             AND id != #{excludeId}
         </if>
+    </select>
+
+    <select id="countByYearAndRegion" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM contract c
+        INNER JOIN institution i ON c.institution_no = i.institution_no
+        WHERE i.region = #{region}
+           AND (
+               YEAR(c.sign_date) = #{year} 
+               OR YEAR(c.expire_date) = #{year}
+               OR (c.sign_date &lt; CONCAT(#{year}, '-01-01') AND c.expire_date &gt; CONCAT(#{year}, '-12-31'))
+           )
+    </select>
+
+    <select id="sumAmountByYearAndRegion" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(c.contract_amount), 0) FROM contract c
+        INNER JOIN institution i ON c.institution_no = i.institution_no
+        WHERE i.region = #{region}
+           AND (
+               YEAR(c.sign_date) = #{year} 
+               OR YEAR(c.expire_date) = #{year}
+               OR (c.sign_date &lt; CONCAT(#{year}, '-01-01') AND c.expire_date &gt; CONCAT(#{year}, '-12-31'))
+           )
     </select>
 
 </mapper>
