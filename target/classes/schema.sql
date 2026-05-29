@@ -76,25 +76,82 @@ CREATE TABLE IF NOT EXISTS contract_fee (
     CONSTRAINT fk_fee_institution FOREIGN KEY (institution_no) REFERENCES institution(institution_no) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='合同费用记录表';
 
+-- 医废车辆表
+CREATE TABLE IF NOT EXISTS waste_vehicle (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '车辆ID',
+    vehicle_no VARCHAR(10) NOT NULL UNIQUE COMMENT '车辆编号（如V00001）',
+    plate_number VARCHAR(20) NOT NULL COMMENT '车牌号',
+    mileage DECIMAL(10,1) COMMENT '车辆里程（公里）',
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1-正常，0-已删除',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX idx_vehicle_no (vehicle_no),
+    INDEX idx_plate_number (plate_number),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='医废车辆信息表';
+
+-- 车队人员表
+CREATE TABLE IF NOT EXISTS waste_staff (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '人员ID',
+    staff_no VARCHAR(10) NOT NULL UNIQUE COMMENT '人员编号（如S00001）',
+    staff_name VARCHAR(50) NOT NULL COMMENT '姓名',
+    phone VARCHAR(20) COMMENT '电话',
+    id_card VARCHAR(18) COMMENT '证件号',
+    position VARCHAR(50) COMMENT '岗位',
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1-正常，0-已删除',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX idx_staff_no (staff_no),
+    INDEX idx_staff_name (staff_name),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='车队人员信息表';
+
+-- 医废医院表
+CREATE TABLE IF NOT EXISTS waste_hospital (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '医院ID',
+    hospital_no VARCHAR(10) NOT NULL UNIQUE COMMENT '医院编号（如H00001）',
+    hospital_name VARCHAR(100) NOT NULL COMMENT '医院名称',
+    region VARCHAR(50) COMMENT '地区编码（忻州市14个区县编码）',
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1-正常，0-已删除',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX idx_hospital_no (hospital_no),
+    INDEX idx_hospital_name (hospital_name),
+    INDEX idx_region (region),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='医废医院信息表';
+
+-- 医废重量记录表
+CREATE TABLE IF NOT EXISTS waste_record (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '记录ID',
+    batch_no VARCHAR(20) NOT NULL UNIQUE COMMENT '批次编号（如YF20260522001）',
+    hospital_no VARCHAR(10) NOT NULL COMMENT '医院编号',
+    region VARCHAR(50) COMMENT '地区编码',
+    vehicle_no VARCHAR(10) NOT NULL COMMENT '车辆编号',
+    staff_nos VARCHAR(30) NOT NULL COMMENT '人员编号（逗号分隔，如S00001,S00002）',
+    infectious_weight DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '感染性重量(kg)',
+    injurious_weight DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '损伤性重量(kg)',
+    pharmaceutical_weight DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '药物性重量(kg)',
+    chemical_weight DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '化学性重量(kg)',
+    pathological_weight DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '病理性重量(kg)',
+    total_weight DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '总重量(kg)',
+    record_date DATE NOT NULL COMMENT '录入日期',
+    created_by VARCHAR(50) COMMENT '录入人',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX idx_batch_no (batch_no),
+    INDEX idx_hospital_no (hospital_no),
+    INDEX idx_region (region),
+    INDEX idx_vehicle_no (vehicle_no),
+    INDEX idx_staff_nos (staff_nos),
+    INDEX idx_record_date (record_date),
+    CONSTRAINT fk_record_hospital FOREIGN KEY (hospital_no) REFERENCES waste_hospital(hospital_no) ON DELETE RESTRICT,
+    CONSTRAINT fk_record_vehicle FOREIGN KEY (vehicle_no) REFERENCES waste_vehicle(vehicle_no) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='医废重量记录表';
+
 -- 插入默认管理员账号（密码：admin123，使用BCrypt加密）
 INSERT INTO sys_user (username, password, real_name, phone, email, role)
 SELECT 'admin', '$2a$10$oNlJ5uqG3D0q1bACGGpItOV/Lj.QexJ7nLYMwuRRGOCRFmsHWIgSK', '系统管理员', '13800138000', 'admin@example.com', 'ADMIN'
 WHERE NOT EXISTS (SELECT 1 FROM sys_user WHERE username = 'admin');
 
--- 插入测试机构数据
-INSERT INTO institution (institution_no, institution_name, institution_type, contact_person, contact_phone, contact_email, region, address, institution_status, remark) VALUES
-('100001', '忻府区人民医院', 'HOSPITAL', '张三', '13800138001', 'zhangsan@hospital.com', '忻府区', '忻府区和平街1号', 'NORMAL', '二级甲等医院'),
-('100002', '原平市中医院', 'HOSPITAL', '李四', '13800138002', 'lisi@hospital.com', '原平市', '原平市建设路2号', 'NORMAL', '二级甲等医院'),
-('100003', '定襄县卫生院', 'HEALTH_CENTER', '王五', '13800138003', 'wangwu@health.com', '定襄县', '定襄县解放路3号', 'NORMAL', '乡镇卫生院'),
-('100004', '五台县卫生所', 'HEALTH_STATION', '赵六', '13800138004', 'zhaoliu@health.com', '五台县', '五台县台城镇4号', 'NORMAL', '村级卫生所'),
-('100005', '代县社区卫生服务中心', 'COMMUNITY', '孙七', '13800138005', 'sunqi@community.com', '代县', '代县上馆镇5号', 'NORMAL', '社区卫生服务中心'),
-('100006', '繁峙县诊所', 'CLINIC', '周八', '13800138006', 'zhouba@clinic.com', '繁峙县', '繁峙县繁城镇6号', 'PAUSED', '私立诊所'),
-('100007', '静乐县药店', 'PHARMACY', '吴九', '13800138007', 'wujiu@pharmacy.com', '静乐县', '静乐县鹅城镇7号', 'NORMAL', '连锁药店'),
-('100008', '宁武县检验中心', 'LABORATORY', '郑十', '13800138008', 'zhengshi@lab.com', '宁武县', '宁武县凤凰镇8号', 'NORMAL', '医学检验中心'),
-('100009', '神池县卫生院', 'HEALTH_CENTER', '钱十一', '13800138009', 'qianshiyi@health.com', '神池县', '神池县龙泉镇9号', 'NORMAL', '乡镇卫生院'),
-('100010', '五寨县卫生所', 'HEALTH_STATION', '王十二', '13800138010', 'wangshier@health.com', '五寨县', '五寨县砚城镇10号', 'NORMAL', '村级卫生所'),
-('100011', '岢岚县人民医院', 'HOSPITAL', '李十三', '13800138011', 'lishisan@hospital.com', '岢岚县', '岢岚县岚漪镇11号', 'NORMAL', '二级乙等医院'),
-('100012', '保德县中医院', 'HOSPITAL', '张十四', '13800138012', 'zhangshisi@hospital.com', '保德县', '保德县东关镇12号', 'NORMAL', '二级甲等医院'),
-('100013', '河曲县社区卫生服务中心', 'COMMUNITY', '刘十五', '13800138013', 'liushiwu@community.com', '河曲县', '河曲县文笔镇13号', 'NORMAL', '社区卫生服务中心'),
-('100014', '偏关县诊所', 'CLINIC', '陈十六', '13800138014', 'chenshiliu@clinic.com', '偏关县', '偏关县新关镇14号', 'NORMAL', '私立诊所')
-ON DUPLICATE KEY UPDATE institution_name = VALUES(institution_name);
+

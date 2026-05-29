@@ -34,4 +34,5 @@ com\ankang\contract\util\PasswordGenerator.class
 com\ankang\contract\mapper\SysUserMapper.class
 com\ankang\contract\util\SecurityUtils.class
 com\ankang\contract\entity\Institution.class
+com\ankang\contract\service\WasteHospitalService$1.class
 com\ankang\contract\dto\PageResponse.class

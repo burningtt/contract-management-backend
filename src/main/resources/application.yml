@@ -1,14 +1,23 @@
 spring:
   application:
     name: contract-management
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 100MB
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/contract_management?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
     username: root
     password: wz1997.0209
-    initialization-mode: always
-    schema: classpath:schema.sql
+  sql:
+    init:
+      mode: never
+      schema-locations: classpath:schema.sql
+      encoding: UTF-8
+      continue-on-error: true
     druid:
       initial-size: 5
       min-idle: 5
@@ -50,6 +59,9 @@ server:
 jwt:
   secret: ankang-contract-management-secret-key-2024
   expiration: 86400000
+
+file:
+  upload-dir: D:/ankang-uploads
 
 logging:
   level:

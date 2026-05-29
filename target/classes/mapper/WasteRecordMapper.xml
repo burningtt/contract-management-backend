@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ankang.contract.mapper.WasteRecordMapper">
+
+    <resultMap id="BaseResultMap" type="com.ankang.contract.entity.WasteRecord">
+        <id column="id" property="id"/>
+        <result column="batch_no" property="batchNo"/>
+        <result column="hospital_no" property="hospitalNo"/>
+        <result column="region" property="region"/>
+        <result column="vehicle_no" property="vehicleNo"/>
+        <result column="staff_nos" property="staffNos"/>
+        <result column="infectious_weight" property="infectiousWeight"/>
+        <result column="injurious_weight" property="injuriousWeight"/>
+        <result column="pharmaceutical_weight" property="pharmaceuticalWeight"/>
+        <result column="chemical_weight" property="chemicalWeight"/>
+        <result column="pathological_weight" property="pathologicalWeight"/>
+        <result column="total_weight" property="totalWeight"/>
+        <result column="record_date" property="recordDate"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 含关联名称的结果映射 -->
+    <resultMap id="DetailResultMap" type="com.ankang.contract.entity.WasteRecord" extends="BaseResultMap">
+        <result column="hospital_name" property="hospitalName"/>
+        <result column="plate_number" property="plateNumber"/>
+        <result column="staff_names" property="staffName"/>
+    </resultMap>
+
+    <select id="findById" resultMap="DetailResultMap">
+        SELECT r.*, h.hospital_name, v.plate_number,
+        (SELECT GROUP_CONCAT(s2.staff_name SEPARATOR ',') FROM waste_staff s2
+         WHERE FIND_IN_SET(s2.staff_no, r.staff_nos)) AS staff_names
+        FROM waste_record r
+        LEFT JOIN waste_hospital h ON r.hospital_no = h.hospital_no
+        LEFT JOIN waste_vehicle v ON r.vehicle_no = v.vehicle_no
+        WHERE r.id = #{id}
+    </select>
+
+    <select id="findByPage" resultMap="DetailResultMap">
+        SELECT r.*, h.hospital_name, v.plate_number,
+        (SELECT GROUP_CONCAT(s2.staff_name SEPARATOR ',') FROM waste_staff s2
+         WHERE FIND_IN_SET(s2.staff_no, r.staff_nos)) AS staff_names
+        FROM waste_record r
+        LEFT JOIN waste_hospital h ON r.hospital_no = h.hospital_no
+        LEFT JOIN waste_vehicle v ON r.vehicle_no = v.vehicle_no
+        <where>
+            <if test="startDate != null">
+                AND r.record_date &gt;= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND r.record_date &lt;= #{endDate}
+            </if>
+            <if test="region != null and region != ''">
+                AND r.region = #{region}
+            </if>
+            <if test="hospitalName != null and hospitalName != ''">
+                AND h.hospital_name LIKE CONCAT('%', #{hospitalName}, '%')
+            </if>
+            <if test="batchNo != null and batchNo != ''">
+                AND r.batch_no LIKE CONCAT('%', #{batchNo}, '%')
+            </if>
+        </where>
+        ORDER BY r.record_date DESC, r.create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="count" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM waste_record r
+        LEFT JOIN waste_hospital h ON r.hospital_no = h.hospital_no
+        <where>
+            <if test="startDate != null">
+                AND r.record_date &gt;= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND r.record_date &lt;= #{endDate}
+            </if>
+            <if test="region != null and region != ''">
+                AND r.region = #{region}
+            </if>
+            <if test="hospitalName != null and hospitalName != ''">
+                AND h.hospital_name LIKE CONCAT('%', #{hospitalName}, '%')
+            </if>
+            <if test="batchNo != null and batchNo != ''">
+                AND r.batch_no LIKE CONCAT('%', #{batchNo}, '%')
+            </if>
+        </where>
+    </select>
+
+    <select id="findLastByHospitalNo" resultMap="BaseResultMap">
+        SELECT * FROM waste_record
+        WHERE hospital_no = #{hospitalNo}
+        ORDER BY record_date DESC, create_time DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectMaxBatchNoByDatePrefix" resultType="java.lang.String">
+        SELECT MAX(batch_no) FROM waste_record WHERE batch_no LIKE CONCAT(#{datePrefix}, '%')
+    </select>
+
+    <select id="selectMaxBatchNoByDatePrefixForUpdate" resultType="java.lang.String">
+        SELECT MAX(batch_no) FROM waste_record WHERE batch_no LIKE CONCAT(#{datePrefix}, '%') FOR UPDATE
+    </select>
+
+    <insert id="insert" parameterType="com.ankang.contract.entity.WasteRecord" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO waste_record (batch_no, hospital_no, region, vehicle_no, staff_nos,
+            infectious_weight, injurious_weight, pharmaceutical_weight, chemical_weight,
+            pathological_weight, total_weight, record_date, created_by)
+        VALUES (#{batchNo}, #{hospitalNo}, #{region}, #{vehicleNo}, #{staffNos},
+            #{infectiousWeight}, #{injuriousWeight}, #{pharmaceuticalWeight}, #{chemicalWeight},
+            #{pathologicalWeight}, #{totalWeight}, #{recordDate}, #{createdBy})
+    </insert>
+
+    <update id="update" parameterType="com.ankang.contract.entity.WasteRecord">
+        UPDATE waste_record
+        <set>
+            <if test="hospitalNo != null">hospital_no = #{hospitalNo},</if>
+            <if test="region != null">region = #{region},</if>
+            <if test="vehicleNo != null">vehicle_no = #{vehicleNo},</if>
+            <if test="staffNos != null">staff_nos = #{staffNos},</if>
+            <if test="infectiousWeight != null">infectious_weight = #{infectiousWeight},</if>
+            <if test="injuriousWeight != null">injurious_weight = #{injuriousWeight},</if>
+            <if test="pharmaceuticalWeight != null">pharmaceutical_weight = #{pharmaceuticalWeight},</if>
+            <if test="chemicalWeight != null">chemical_weight = #{chemicalWeight},</if>
+            <if test="pathologicalWeight != null">pathological_weight = #{pathologicalWeight},</if>
+            <if test="totalWeight != null">total_weight = #{totalWeight},</if>
+            <if test="recordDate != null">record_date = #{recordDate},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <select id="findAllForExport" resultMap="DetailResultMap">
+        SELECT r.*, h.hospital_name, v.plate_number,
+        (SELECT GROUP_CONCAT(s2.staff_name SEPARATOR ',') FROM waste_staff s2
+         WHERE FIND_IN_SET(s2.staff_no, r.staff_nos)) AS staff_names
+        FROM waste_record r
+        LEFT JOIN waste_hospital h ON r.hospital_no = h.hospital_no
+        LEFT JOIN waste_vehicle v ON r.vehicle_no = v.vehicle_no
+        <where>
+            <if test="startDate != null">
+                AND r.record_date &gt;= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND r.record_date &lt;= #{endDate}
+            </if>
+            <if test="region != null and region != ''">
+                AND r.region = #{region}
+            </if>
+            <if test="hospitalName != null and hospitalName != ''">
+                AND h.hospital_name LIKE CONCAT('%', #{hospitalName}, '%')
+            </if>
+            <if test="batchNo != null and batchNo != ''">
+                AND r.batch_no LIKE CONCAT('%', #{batchNo}, '%')
+            </if>
+        </where>
+        ORDER BY r.record_date DESC, r.create_time DESC
+    </select>
+
+    <delete id="deleteById">
+        DELETE FROM waste_record WHERE id = #{id}
+    </delete>
+
+</mapper>
