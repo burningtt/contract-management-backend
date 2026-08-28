@@ -32,7 +32,7 @@ public class AuthService {
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("密码错误");
         }
-        String token = jwtUtil.generateToken(user.getUsername(), user.getId(), user.getRealName());
+        String token = jwtUtil.generateToken(user.getUsername(), user.getId(), user.getRealName(), user.getRole());
         return new LoginResponse(token, user.getId(), user.getUsername(), user.getRealName(), user.getRole());
     }
 }

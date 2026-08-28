@@ -29,6 +29,37 @@ public class InstitutionImportService {
     private static final int MAX_RECORDS = 1000;
     private static final Pattern PHONE_PATTERN = Pattern.compile("^(\\d{3,4}-)?\\d{7,8}$|^1[3-9]\\d{9}$");
 
+    /** 区域名称 -> 区域代码 映射（与前端 region.js 保持一致） */
+    private static final Map<String, String> REGION_NAME_TO_CODE = new LinkedHashMap<>();
+    /** 合法区域代码集合 */
+    private static final Set<String> VALID_REGION_CODES = new LinkedHashSet<>();
+    /** 机构类别名称 -> 类别代码 映射（与前端机构管理页面保持一致） */
+    private static final Map<String, String> TYPE_NAME_TO_CODE = new LinkedHashMap<>();
+    /** 合法机构类别代码集合 */
+    private static final Set<String> VALID_TYPE_CODES = new LinkedHashSet<>();
+
+    static {
+        String[][] regions = {
+            {"XFQ", "忻府区"}, {"YPS", "原平市"}, {"DXX", "定襄县"}, {"WTX", "五台县"},
+            {"DZX", "代县"}, {"FSX", "繁峙县"}, {"JLX", "静乐县"}, {"NWX", "宁武县"},
+            {"SCX", "神池县"}, {"WZX", "五寨县"}, {"KLX", "岢岚县"}, {"BDX", "保德县"},
+            {"HQX", "河曲县"}, {"PGX", "偏关县"}
+        };
+        for (String[] region : regions) {
+            REGION_NAME_TO_CODE.put(region[1], region[0]);
+            VALID_REGION_CODES.add(region[0]);
+        }
+        String[][] types = {
+            {"HOSPITAL", "医院"}, {"CLINIC", "诊所"}, {"COMMUNITY", "社区卫生服务中心"},
+            {"PHARMACY", "药店"}, {"LABORATORY", "检验中心"}, {"HEALTH_CENTER", "卫生院"},
+            {"HEALTH_STATION", "卫生所"}, {"OTHER", "其他"}
+        };
+        for (String[] type : types) {
+            TYPE_NAME_TO_CODE.put(type[1], type[0]);
+            VALID_TYPE_CODES.add(type[0]);
+        }
+    }
+
     private final InstitutionMapper institutionMapper;
 
     public InstitutionImportService(InstitutionMapper institutionMapper) {
@@ -66,6 +97,10 @@ public class InstitutionImportService {
                 }
 
                 InstitutionImportDTO dto = parseRow(row, columnIndexMap, i);
+                // 跳过模板自带的示例行，避免误导入
+                if (dto.getInstitutionName() != null && dto.getInstitutionName().startsWith("示例医疗机构")) {
+                    continue;
+                }
                 dataList.add(dto);
             }
 
@@ -228,9 +263,28 @@ public class InstitutionImportService {
         for (InstitutionImportDTO dto : dataList) {
             List<String> errors = new ArrayList<>();
 
+            // 地区：支持填区域代码或中文名称，统一转换为区域代码后入库
             if (dto.getRegion() == null || dto.getRegion().isEmpty()) {
                 errors.add("地区不能为空");
+            } else {
+                String regionCode = normalizeRegion(dto.getRegion());
+                if (regionCode == null) {
+                    errors.add("地区代码不正确（请参考模板'代码说明'工作表中的区域代码表）");
+                } else {
+                    dto.setRegion(regionCode);
+                }
             }
+
+            // 机构类型：选填，支持填类别代码或中文名称，统一转换为类别代码后入库
+            if (dto.getInstitutionType() != null && !dto.getInstitutionType().isEmpty()) {
+                String typeCode = normalizeInstitutionType(dto.getInstitutionType());
+                if (typeCode == null) {
+                    errors.add("机构类别代码不正确（请参考模板'代码说明'工作表中的机构类别代码表）");
+                } else {
+                    dto.setInstitutionType(typeCode);
+                }
+            }
+
             if (dto.getInstitutionName() == null || dto.getInstitutionName().isEmpty()) {
                 errors.add("机构名称不能为空");
             }
@@ -274,6 +328,32 @@ public class InstitutionImportService {
 
         result.setSuccessCount(result.getValidData().size());
         result.setFailCount(result.getErrors().size());
+    }
+
+    /**
+     * 将地区输入规范化为区域代码
+     * @param input 用户填写的地区（区域代码或中文名称）
+     * @return 区域代码；输入不合法时返回 null
+     */
+    private String normalizeRegion(String input) {
+        String trimmed = input.trim();
+        if (VALID_REGION_CODES.contains(trimmed)) {
+            return trimmed;
+        }
+        return REGION_NAME_TO_CODE.get(trimmed);
+    }
+
+    /**
+     * 将机构类别输入规范化为类别代码
+     * @param input 用户填写的机构类别（类别代码或中文名称）
+     * @return 类别代码；输入不合法时返回 null
+     */
+    private String normalizeInstitutionType(String input) {
+        String trimmed = input.trim();
+        if (VALID_TYPE_CODES.contains(trimmed)) {
+            return trimmed;
+        }
+        return TYPE_NAME_TO_CODE.get(trimmed);
     }
 
     private Institution convertToEntity(InstitutionImportDTO dto, String operator) {
