@@ -1,5 +1,0 @@
-com\ankang\contract\config\SecurityRbacIntegrationTest.class
-com\ankang\contract\filter\JwtAuthenticationFilterTest.class
-com\ankang\contract\task\ContractStatusSchedulerIntegrationTest.class
-com\ankang\contract\task\ContractStatusSchedulerTest.class
-com\ankang\contract\config\JwtUtilTest.class
