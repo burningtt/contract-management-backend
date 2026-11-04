@@ -1,6 +1,5 @@
 com\ankang\contract\dto\ApiResponse.class
 com\ankang\contract\mapper\WasteStaffMapper.class
-com\ankang\contract\service\impl\ContractAttachmentServiceImpl.class
 com\ankang\contract\dto\FeeStatisticsDTO.class
 com\ankang\contract\mapper\WasteHospitalMapper.class
 com\ankang\contract\entity\ContractFee.class

@@ -30,9 +30,13 @@ public class ContractAttachmentServiceImpl implements ContractAttachmentService 
 
     private static final long MAX_FILE_SIZE = 50 * 1024 * 1024;
 
-    private static final String ALLOWED_CONTENT_TYPE = "application/pdf";
+    private static final String EXT_PDF = ".pdf";
 
-    private static final String PDF_EXTENSION = ".pdf";
+    private static final String EXT_JPG = ".jpg";
+
+    private static final String EXT_PNG = ".png";
+
+    private static final String EXT_HEIC = ".heic";
 
     private final ContractAttachmentMapper attachmentMapper;
 
@@ -56,13 +60,10 @@ public class ContractAttachmentServiceImpl implements ContractAttachmentService 
             throw new IllegalArgumentException("文件大小不能超过50MB");
         }
 
-        // 校验文件类型：优先使用Content-Type，其次使用文件扩展名
-        String contentType = file.getContentType();
-        String originalName = file.getOriginalFilename();
-        boolean isPdf = (contentType != null && contentType.equals(ALLOWED_CONTENT_TYPE))
-                || (originalName != null && originalName.toLowerCase().endsWith(PDF_EXTENSION));
-        if (!isPdf) {
-            throw new IllegalArgumentException("仅支持上传PDF格式的文件");
+        // 校验并解析文件类型：支持PDF与JPG/PNG/HEIC图片混传
+        String extension = resolveExtension(file);
+        if (extension == null) {
+            throw new IllegalArgumentException("仅支持PDF、JPG、PNG、HEIC格式的文件");
         }
 
         // 按日期分目录存储：uploadDir/2026-05-18/
@@ -76,7 +77,8 @@ public class ContractAttachmentServiceImpl implements ContractAttachmentService 
         }
 
         // 生成唯一存储文件名，避免文件名冲突
-        String storedName = UUID.randomUUID().toString().replace("-", "") + PDF_EXTENSION;
+        String originalName = file.getOriginalFilename();
+        String storedName = UUID.randomUUID().toString().replace("-", "") + extension;
         Path filePath = dirPath.resolve(storedName);
 
         try {
@@ -95,7 +97,7 @@ public class ContractAttachmentServiceImpl implements ContractAttachmentService 
         attachment.setStoredName(storedName);
         attachment.setFilePath(relativePath);
         attachment.setFileSize(file.getSize());
-        attachment.setFileType("PDF");
+        attachment.setFileType(resolveFileType(extension));
         attachment.setUploadBy(uploadBy);
         attachment.setRemark(remark);
 
@@ -104,6 +106,47 @@ public class ContractAttachmentServiceImpl implements ContractAttachmentService 
                 contractNo, originalName, storedName);
 
         return attachment;
+    }
+
+    /**
+     * 解析上传文件的扩展名
+     * @param file 上传文件
+     * @return 扩展名（.pdf/.jpg/.png/.heic），不支持时返回null
+     */
+    private String resolveExtension(MultipartFile file) {
+        String name = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase();
+        String contentType = file.getContentType() == null ? "" : file.getContentType();
+        if (contentType.equals("application/pdf") || name.endsWith(EXT_PDF)) {
+            return EXT_PDF;
+        }
+        if (contentType.equals("image/jpeg") || name.endsWith(EXT_JPG) || name.endsWith(".jpeg")) {
+            return EXT_JPG;
+        }
+        if (contentType.equals("image/png") || name.endsWith(EXT_PNG)) {
+            return EXT_PNG;
+        }
+        if (contentType.equals("image/heic") || name.endsWith(EXT_HEIC)) {
+            return EXT_HEIC;
+        }
+        return null;
+    }
+
+    /**
+     * 根据扩展名解析文件类型标识
+     * @param extension 扩展名
+     * @return 文件类型（PDF/JPG/PNG/HEIC）
+     */
+    private String resolveFileType(String extension) {
+        switch (extension) {
+            case EXT_PDF:
+                return "PDF";
+            case EXT_JPG:
+                return "JPG";
+            case EXT_PNG:
+                return "PNG";
+            default:
+                return "HEIC";
+        }
     }
 
     @Override

@@ -82,7 +82,7 @@
     </select>
 
     <select id="searchInstitutionContracts" resultType="com.ankang.contract.dto.ContractQueryDTO">
-        SELECT 
+        SELECT
             i.id as institutionId,
             i.institution_no as institutionNo,
             i.institution_name as institutionName,
@@ -95,41 +95,69 @@
             c.responsible_person as responsiblePerson,
             c.contract_status as contractStatus,
             c.remark as remark
-        FROM institution i
-        LEFT JOIN (
-            SELECT c2.*, 
-                   ROW_NUMBER() OVER(PARTITION BY c2.institution_no ORDER BY 
-                       CASE c2.contract_status 
-                           WHEN 'ACTIVE' THEN 1 
-                           WHEN 'PENDING' THEN 2 
-                           ELSE 3 
-                       END,
-                       CASE c2.contract_status 
-                           WHEN 'PENDING' THEN ABS(DATEDIFF(c2.sign_date, CURDATE()))
-                           WHEN 'INACTIVE' THEN ABS(DATEDIFF(c2.expire_date, CURDATE()))
-                           ELSE 0
-                       END
-                   ) as rn
-            FROM contract c2
-            <if test="year != null">
-                WHERE YEAR(c2.sign_date) = #{year}
-            </if>
-        ) c ON i.institution_no = c.institution_no AND c.rn = 1
-        WHERE i.institution_status = 'NORMAL'
-        <if test="institutionNo != null and institutionNo != ''">
-            AND i.institution_no = #{institutionNo}
-        </if>
-        <if test="region != null and region != ''">
-            AND i.region = #{region}
-        </if>
-        <if test="keyword != null and keyword != ''">
-            AND (
-                i.institution_no LIKE CONCAT('%', #{keyword}, '%')
-                OR i.institution_name LIKE CONCAT('%', #{keyword}, '%')
-                OR c.contract_no LIKE CONCAT('%', #{keyword}, '%')
-            )
-        </if>
-        ORDER BY i.institution_no
+        <choose>
+            <!-- 年份筛选：按合同维度返回与该年份相关的全部合同（一份合同一行） -->
+            <when test="year != null">
+                FROM contract c
+                INNER JOIN institution i ON i.institution_no = c.institution_no
+                WHERE i.institution_status = 'NORMAL'
+                <!-- 年份语义与countByYear一致：签订年份 OR 到期年份 OR 合同有效期覆盖整年 -->
+                AND (
+                    YEAR(c.sign_date) = #{year}
+                    OR YEAR(c.expire_date) = #{year}
+                    OR (c.sign_date &lt; CONCAT(#{year}, '-01-01') AND c.expire_date &gt; CONCAT(#{year}, '-12-31'))
+                )
+                <if test="institutionNo != null and institutionNo != ''">
+                    AND i.institution_no = #{institutionNo}
+                </if>
+                <if test="region != null and region != ''">
+                    AND i.region = #{region}
+                </if>
+                <if test="keyword != null and keyword != ''">
+                    AND (
+                        i.institution_no LIKE CONCAT('%', #{keyword}, '%')
+                        OR i.institution_name LIKE CONCAT('%', #{keyword}, '%')
+                        OR c.contract_no LIKE CONCAT('%', #{keyword}, '%')
+                    )
+                </if>
+                ORDER BY c.sign_date DESC, c.institution_no
+            </when>
+            <!-- 无年份筛选：机构视图，每个机构显示一条优先级最高的合同 -->
+            <otherwise>
+                FROM institution i
+                LEFT JOIN (
+                    SELECT c2.*,
+                           ROW_NUMBER() OVER(PARTITION BY c2.institution_no ORDER BY
+                               CASE c2.contract_status
+                                   WHEN 'ACTIVE' THEN 1
+                                   WHEN 'PENDING' THEN 2
+                                   ELSE 3
+                               END,
+                               CASE c2.contract_status
+                                   WHEN 'PENDING' THEN ABS(DATEDIFF(c2.sign_date, CURDATE()))
+                                   WHEN 'INACTIVE' THEN ABS(DATEDIFF(c2.expire_date, CURDATE()))
+                                   ELSE 0
+                               END
+                           ) as rn
+                    FROM contract c2
+                ) c ON i.institution_no = c.institution_no AND c.rn = 1
+                WHERE i.institution_status = 'NORMAL'
+                <if test="institutionNo != null and institutionNo != ''">
+                    AND i.institution_no = #{institutionNo}
+                </if>
+                <if test="region != null and region != ''">
+                    AND i.region = #{region}
+                </if>
+                <if test="keyword != null and keyword != ''">
+                    AND (
+                        i.institution_no LIKE CONCAT('%', #{keyword}, '%')
+                        OR i.institution_name LIKE CONCAT('%', #{keyword}, '%')
+                        OR c.contract_no LIKE CONCAT('%', #{keyword}, '%')
+                    )
+                </if>
+                ORDER BY i.institution_no
+            </otherwise>
+        </choose>
         LIMIT #{offset}, #{size}
     </select>
 
@@ -138,32 +166,54 @@
     </select>
 
     <select id="countSearchInstitutionContracts" resultType="java.lang.Long">
-        SELECT COUNT(DISTINCT i.id) FROM institution i
-        WHERE i.institution_status = 'NORMAL'
-        <if test="year != null">
-            AND EXISTS (
-                SELECT 1 FROM contract c 
-                WHERE c.institution_no = i.institution_no 
-                AND YEAR(c.sign_date) = #{year}
-            )
-        </if>
-        <if test="institutionNo != null and institutionNo != ''">
-            AND i.institution_no = #{institutionNo}
-        </if>
-        <if test="region != null and region != ''">
-            AND i.region = #{region}
-        </if>
-        <if test="keyword != null and keyword != ''">
-            AND (
-                i.institution_no LIKE CONCAT('%', #{keyword}, '%')
-                OR i.institution_name LIKE CONCAT('%', #{keyword}, '%')
-                OR EXISTS (
-                    SELECT 1 FROM contract c 
-                    WHERE c.institution_no = i.institution_no 
-                    AND c.contract_no LIKE CONCAT('%', #{keyword}, '%')
+        <choose>
+            <!-- 年份筛选：按合同维度统计与该年份相关的合同数（与主查询语义一致） -->
+            <when test="year != null">
+                SELECT COUNT(*) FROM contract c
+                INNER JOIN institution i ON i.institution_no = c.institution_no
+                WHERE i.institution_status = 'NORMAL'
+                AND (
+                    YEAR(c.sign_date) = #{year}
+                    OR YEAR(c.expire_date) = #{year}
+                    OR (c.sign_date &lt; CONCAT(#{year}, '-01-01') AND c.expire_date &gt; CONCAT(#{year}, '-12-31'))
                 )
-            )
-        </if>
+                <if test="institutionNo != null and institutionNo != ''">
+                    AND i.institution_no = #{institutionNo}
+                </if>
+                <if test="region != null and region != ''">
+                    AND i.region = #{region}
+                </if>
+                <if test="keyword != null and keyword != ''">
+                    AND (
+                        i.institution_no LIKE CONCAT('%', #{keyword}, '%')
+                        OR i.institution_name LIKE CONCAT('%', #{keyword}, '%')
+                        OR c.contract_no LIKE CONCAT('%', #{keyword}, '%')
+                    )
+                </if>
+            </when>
+            <!-- 无年份筛选：按机构数统计 -->
+            <otherwise>
+                SELECT COUNT(DISTINCT i.id) FROM institution i
+                WHERE i.institution_status = 'NORMAL'
+                <if test="institutionNo != null and institutionNo != ''">
+                    AND i.institution_no = #{institutionNo}
+                </if>
+                <if test="region != null and region != ''">
+                    AND i.region = #{region}
+                </if>
+                <if test="keyword != null and keyword != ''">
+                    AND (
+                        i.institution_no LIKE CONCAT('%', #{keyword}, '%')
+                        OR i.institution_name LIKE CONCAT('%', #{keyword}, '%')
+                        OR EXISTS (
+                            SELECT 1 FROM contract c
+                            WHERE c.institution_no = i.institution_no
+                            AND c.contract_no LIKE CONCAT('%', #{keyword}, '%')
+                        )
+                    )
+                </if>
+            </otherwise>
+        </choose>
     </select>
 
     <select id="findByInstitutionNo" resultMap="BaseResultMap">

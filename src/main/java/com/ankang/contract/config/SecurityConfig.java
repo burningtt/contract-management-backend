@@ -58,6 +58,8 @@ public class SecurityConfig {
                 .requestMatchers("/auth/login", "/auth/register", "/test/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/waste/hospitals/import/template").permitAll()
+                // 手机扫码上传：凭短时效会话token自行鉴权，无需登录态
+                .requestMatchers("/mobile-upload/**").permitAll()
                 // 用户管理接口仅ADMIN角色可访问（RBAC）
                 .requestMatchers("/users/**").hasRole("ADMIN")
                 .anyRequest().authenticated()

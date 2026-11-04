@@ -1,8 +1,10 @@
 package com.ankang.contract.controller;
 
 import com.ankang.contract.dto.ApiResponse;
+import com.ankang.contract.dto.UploadSession;
 import com.ankang.contract.entity.ContractAttachment;
 import com.ankang.contract.service.ContractAttachmentService;
+import com.ankang.contract.service.UploadSessionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -24,8 +26,12 @@ public class ContractAttachmentController {
 
     private final ContractAttachmentService attachmentService;
 
-    public ContractAttachmentController(ContractAttachmentService attachmentService) {
+    private final UploadSessionService uploadSessionService;
+
+    public ContractAttachmentController(ContractAttachmentService attachmentService,
+                                       UploadSessionService uploadSessionService) {
         this.attachmentService = attachmentService;
+        this.uploadSessionService = uploadSessionService;
     }
 
     /**
@@ -99,7 +105,7 @@ public class ContractAttachmentController {
                     .replaceAll("\\+", "%20");
 
             return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_PDF)
+                    .contentType(resolveMediaType(attachment))
                     .header(HttpHeaders.CONTENT_DISPOSITION,
                             "attachment; filename*=UTF-8''" + encodedFileName)
                     .body(resource);
@@ -128,7 +134,7 @@ public class ContractAttachmentController {
             Resource resource = attachmentService.downloadAttachment(id);
 
             return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_PDF)
+                    .contentType(resolveMediaType(attachment))
                     .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
                     .body(resource);
         } catch (IllegalArgumentException e) {
@@ -137,6 +143,40 @@ public class ContractAttachmentController {
         } catch (RuntimeException e) {
             logger.error("附件预览失败", e);
             return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * 创建手机扫码上传会话
+     * @param contractNo 合同编号
+     * @param uploadBy 上传人（当前登录用户）
+     * @return 上传会话信息（含短时效token）
+     */
+    @PostMapping("/upload-session")
+    public ApiResponse<UploadSession> createUploadSession(
+            @RequestParam("contractNo") String contractNo,
+            @RequestParam(value = "uploadBy", required = false) String uploadBy) {
+        if (contractNo == null || contractNo.isEmpty()) {
+            return ApiResponse.error("合同编号不能为空");
+        }
+        return ApiResponse.success("创建成功", uploadSessionService.createSession(contractNo, uploadBy));
+    }
+
+    /**
+     * 根据附件文件类型解析HTTP Content-Type
+     * @param attachment 附件信息
+     * @return 对应的MediaType
+     */
+    private MediaType resolveMediaType(ContractAttachment attachment) {
+        switch (attachment.getFileType() == null ? "PDF" : attachment.getFileType()) {
+            case "JPG":
+                return MediaType.IMAGE_JPEG;
+            case "PNG":
+                return MediaType.IMAGE_PNG;
+            case "HEIC":
+                return MediaType.parseMediaType("image/heic");
+            default:
+                return MediaType.APPLICATION_PDF;
         }
     }
 

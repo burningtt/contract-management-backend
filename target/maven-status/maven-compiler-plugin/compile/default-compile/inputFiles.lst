@@ -1,3 +1,4 @@
+D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\dto\UploadSession.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\config\JwtUtil.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\dto\FeeStatisticsDTO.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\entity\ContractFee.java
@@ -7,6 +8,7 @@ D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\c
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\service\AuthService.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\controller\ContractController.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\controller\ContractFeeController.java
+D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\service\impl\UploadSessionServiceImpl.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\controller\WasteRecordController.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\service\InstitutionService.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\filter\JwtAuthenticationFilter.java
@@ -26,6 +28,7 @@ D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\m
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\controller\WasteStaffController.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\dto\LoginRequest.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\config\CorsConfig.java
+D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\service\UploadSessionService.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\entity\Contract.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\entity\ContractAttachment.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\dto\WasteHospitalImportResultDTO.java
@@ -62,6 +65,7 @@ D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\d
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\mapper\WasteHospitalMapper.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\task\ContractStatusScheduler.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\config\SecurityConfig.java
+D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\controller\MobileUploadController.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\service\ContractService.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\config\SchedulingConfig.java
 D:\AnkangProject\contract-management-backend\src\main\java\com\ankang\contract\entity\WasteRecord.java
